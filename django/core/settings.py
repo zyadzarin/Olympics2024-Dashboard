@@ -20,6 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Development
 dotenv_file = BASE_DIR / '.env.local'
+
 # Production
 # dotenv_file = BASE_DIR / '.env'
 
@@ -47,6 +48,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Custom Apps
+    'apps.model',
+    
+    # Third-party
 ]
 
 MIDDLEWARE = [
