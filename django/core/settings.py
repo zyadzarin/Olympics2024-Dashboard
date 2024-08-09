@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Custom Apps
-    'apps.model',
+    'apps.olympics_games',
+    'apps.results',
     
     # Third-party
 ]
