@@ -1,1 +1,5 @@
 django/venv
+django/core/__pycache__
+
+# Environmental File
+django/.env.local
