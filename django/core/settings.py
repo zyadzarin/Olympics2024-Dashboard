@@ -83,13 +83,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django_snowflake',
-        # 'NAME': BASE_DIR / 'db.snowflake',
         'NAME': 'OLYMPICS2024',
         'SCHEMA': 'PUBLIC',
         'WAREHOUSE': 'COMPUTE_WH',
-        'USER': getenv('USERNAME'),
-        'PASSWORD': getenv('PASSWORD'),
-        'ACCOUNT': getenv('ACCOUNT_IDENTIFIER'),
+        'USER': getenv('USER', None),
+        'PASSWORD': getenv('PASSWORD', None),
+        'ACCOUNT': getenv('ACCOUNT_IDENTIFIER', None),
         # Include 'OPTIONS' if you need to specify any other
         # snowflake.connector.connect() parameters.
         # https://docs.snowflake.com/en/user-guide/python-connector-api.html#connect
