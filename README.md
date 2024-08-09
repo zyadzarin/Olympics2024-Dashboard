@@ -10,7 +10,16 @@ $ pip install -r .\requirements.txt
 ```
 
 ## Setting up frontend
-
+```
 $ cd .\frontend\
 $ npm install
 $ npm start
+```
+
+## Database migration
+```
+$ cd .\django\
+$ .\venv\Scripts\activate
+$ python .\manage.py makemigration
+$ python .\manage.py migrate
+```
