@@ -1,6 +1,6 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
-  path('', views.sample, name='sample'),
+  path('rank_country_by_medals', views.rank_country_by_medals, name='rank_country_by_medals'),
 ]

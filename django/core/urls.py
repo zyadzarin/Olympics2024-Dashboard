@@ -19,6 +19,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('apps.olympics_games.urls')),
-    # path('', include('apps.results.urls')),
+    
+    # Version 1
+    path('api/v1/', include('apps.olympics_games.urls')),
+    # path('api/v1/', include('apps.results.urls')),
 ]
