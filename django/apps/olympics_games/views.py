@@ -2,7 +2,7 @@ from django.db.models import Count, Q
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count
+from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Events, Athletes, Medals, Athletes, Medallists, MedalsTotal
@@ -10,7 +10,7 @@ from django.db.models import Q
 from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer
 from django.utils.decorators import method_decorator
 from .models import Events, Medals, Athletes, Medallists, MedalsTotal, MedalsTally
-from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, SportSerializer
+from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, MedallistSerializer, SportSerializer
 
 # Create your views here.
 class MedallistsStatsView(APIView):
@@ -30,36 +30,6 @@ class MedallistsStatsView(APIView):
 
     serializer = MedallitstsStatsSerializer(data)
     return Response(serializer.data)
-  
-# class CountryMedalsView(APIView):
-#   def get(self, request):
-#     # Get top 5 countries by total medals
-#     top_5_medals = MedalsTotal.objects.order_by('-total')[:5]
-
-#     # Get athlete counts for these top 5 countries
-#     country_codes = [medal.country_code for medal in top_5_medals]
-#     athlete_counts = Athletes.objects.filter(country_code__in=country_codes)\
-#                       .values('country_code')\
-#                       .annotate(athletes_num=Count('code'))
-
-#     # Combine the data
-#     combined_data = []
-#     for medal in top_5_medals:
-#       athlete_count = next((item for item in athlete_counts if item['country_code'] == medal.country_code), None)
-#       country = Athletes.objects.filter(country_code=medal.country_code).values_list('country', flat=True).first() or ''
-#       country_data = {
-#         'country_code': medal.country_code,
-#         'country': country,
-#         'gold': medal.gold_medal or 0,
-#         'silver': medal.silver_medal or 0,
-#         'bronze': medal.bronze_medal or 0,
-#         'total': medal.total or 0,
-#         'athletes_num': athlete_count['athletes_num'] if athlete_count else 0
-#       }
-#       combined_data.append(country_data)
-
-#     serializer = CountryMedalsSerializer(combined_data, many=True)
-#     return Response(serializer.data)
 
 class CountryMedalsView(APIView):
   @method_decorator(cache_page(60 * 10))    # Cache the response for 10 minutes
@@ -148,6 +118,10 @@ class SportListView(APIView):
 
         serializer = SportSerializer(sport_list, many=True)
         return Response({'sports': serializer.data})
+
+class MedallistListView(generics.ListAPIView):
+  queryset = Medallists.objects.all()
+  serializer_class = MedallistSerializer
 
 class CountryMedalsHistoryView(APIView):
   def get(self, request):
