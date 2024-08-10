@@ -28,3 +28,12 @@ class CountryMedalsHistorySerializer(serializers.Serializer):
   country_code = serializers.CharField()
   country = serializers.CharField()
   medals_history = YearlyMedalsSerializer(many=True)
+
+class SportSerializer(serializers.Serializer):
+    sport = serializers.CharField()
+    sport_code = serializers.CharField()
+    total_participants = serializers.IntegerField()
+    total_medals = serializers.IntegerField()
+    total_gold = serializers.IntegerField()
+    total_silver = serializers.IntegerField()
+    total_bronze = serializers.IntegerField()

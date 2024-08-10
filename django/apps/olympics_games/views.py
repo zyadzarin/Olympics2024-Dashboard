@@ -10,7 +10,7 @@ from django.db.models import Q
 from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer
 from django.utils.decorators import method_decorator
 from .models import Events, Medals, Athletes, Medallists, MedalsTotal, MedalsTally
-from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer
+from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, SportSerializer
 
 # Create your views here.
 class MedallistsStatsView(APIView):
@@ -93,60 +93,61 @@ class CountryMedalsView(APIView):
     return Response(serializer.data)
 
 
-@cache_page(60 * 5)    # Cache the response for 5 minutes
-def sport_list(request):
-  # Get all sports with their codes
-  sports = list(Events.objects.values('sport', 'sport_code').distinct())
+class SportListView(APIView):
+    @method_decorator(cache_page(60 * 5))  # Cache the response for 5 minutes
+    def get(self, request):
+        # Get all sports with their codes
+        sports = list(Events.objects.values('sport', 'sport_code').distinct())
 
-  # Create a dictionary to store sport data
-  sport_data = {sport['sport']: {
-    'sport': sport['sport'],
-    'sport_code': sport['sport_code'],
-    'total_participants': 0,
-    'total_medals': 0,
-    'total_gold': 0,
-    'total_silver': 0,
-    'total_bronze': 0
-  } for sport in sports}
+        # Create a dictionary to store sport data
+        sport_data = {sport['sport']: {
+            'sport': sport['sport'],
+            'sport_code': sport['sport_code'],
+            'total_participants': 0,
+            'total_medals': 0,
+            'total_gold': 0,
+            'total_silver': 0,
+            'total_bronze': 0
+        } for sport in sports}
 
-  # Count participants
-  for sport in sports:
-    sport_name = sport['sport']
-    events = Events.objects.filter(sport=sport_name).values_list('event', flat=True)
-    participants = Athletes.objects.filter(
-      Q(disciplines__icontains=sport_name) | 
-      Q(events__icontains=sport_name) |
-      Q(disciplines__in=events) | 
-      Q(events__in=events)
-    ).distinct().count()
-    sport_data[sport_name]['total_participants'] = participants
+        # Count participants
+        for sport in sports:
+            sport_name = sport['sport']
+            events = Events.objects.filter(sport=sport_name).values_list('event', flat=True)
+            participants = Athletes.objects.filter(
+                Q(disciplines__icontains=sport_name) | 
+                Q(events__icontains=sport_name) |
+                Q(disciplines__in=events) | 
+                Q(events__in=events)
+            ).distinct().count()
+            sport_data[sport_name]['total_participants'] = participants
 
-  # Count medals
-  for sport in sports:
-    sport_name = sport['sport']
-    events = Events.objects.filter(sport=sport_name).values_list('event', flat=True)
-    
-    medal_counts = Medals.objects.filter(
-      Q(discipline__icontains=sport_name) |
-      Q(event__icontains=sport_name) |
-      Q(discipline__in=events) |
-      Q(event__in=events)
-    ).values('medal_type').annotate(count=Count('code'))
+        # Count medals
+        for sport in sports:
+            sport_name = sport['sport']
+            events = Events.objects.filter(sport=sport_name).values_list('event', flat=True)
+            
+            medal_counts = Medals.objects.filter(
+                Q(discipline__icontains=sport_name) |
+                Q(event__icontains=sport_name) |
+                Q(discipline__in=events) |
+                Q(event__in=events)
+            ).values('medal_type').annotate(count=Count('code'))
 
-    for item in medal_counts:
-      sport_data[sport_name]['total_medals'] += item['count']
-      if item['medal_type'] == 'Gold Medal':
-        sport_data[sport_name]['total_gold'] += item['count']
-      elif item['medal_type'] == 'Silver Medal':
-        sport_data[sport_name]['total_silver'] += item['count']
-      elif item['medal_type'] == 'Bronze Medal':
-        sport_data[sport_name]['total_bronze'] += item['count']
+            for item in medal_counts:
+                sport_data[sport_name]['total_medals'] += item['count']
+                if item['medal_type'] == 'Gold Medal':
+                    sport_data[sport_name]['total_gold'] += item['count']
+                elif item['medal_type'] == 'Silver Medal':
+                    sport_data[sport_name]['total_silver'] += item['count']
+                elif item['medal_type'] == 'Bronze Medal':
+                    sport_data[sport_name]['total_bronze'] += item['count']
 
-  # Convert the dictionary to a list of values
-  sport_list = list(sport_data.values())
+        # Convert the dictionary to a list of values
+        sport_list = list(sport_data.values())
 
-  # Return the data as JSON response
-  return JsonResponse({'sports': sport_list}, encoder=DjangoJSONEncoder)
+        serializer = SportSerializer(sport_list, many=True)
+        return Response({'sports': serializer.data})
 
 class CountryMedalsHistoryView(APIView):
   def get(self, request):
