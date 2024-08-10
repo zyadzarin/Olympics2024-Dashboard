@@ -1,0 +1,7 @@
+django/venv
+django/core/__pycache__
+django/apps/*/__pycache__
+django/apps/*/migrations
+
+# Environmental File
+django/.env.local
