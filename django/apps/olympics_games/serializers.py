@@ -11,6 +11,7 @@ class MedallitstsStatsSerializer(serializers.Serializer):
 class CountryMedalsSerializer(serializers.Serializer):
   country_code = serializers.CharField()
   country = serializers.CharField()
+  country_full = serializers.CharField()
   gold = serializers.IntegerField()
   silver = serializers.IntegerField()
   bronze = serializers.IntegerField()
