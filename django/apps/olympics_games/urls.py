@@ -1,10 +1,10 @@
 from django.urls import path, include
 from . import views
-from .views import MedallistsStatsView
+from .views import MedallistsStatsView, CountryMedalsView
 
 urlpatterns = [
-  path('general-stats/', MedallistsStatsView.as_view(), name='medallists-stats'),
-  path('rank_country_by_medals', views.rank_country_by_medals, name='rank_country_by_medals'),
+  path('general_stats/', MedallistsStatsView.as_view(), name='medallists-stats'),
+  path('country_medals/', CountryMedalsView.as_view(), name='country-medals'),
   path('events', views.sport_list, name='events'),
 ]
 
