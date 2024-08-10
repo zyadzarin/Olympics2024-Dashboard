@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'apps.results',
     
     # Third-party
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
