@@ -5,3 +5,5 @@ django/apps/*/migrations
 
 # Environmental File
 django/.env.local
+
+frontend/venv
