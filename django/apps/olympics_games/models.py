@@ -105,6 +105,22 @@ class MedalsTotal(models.Model):
   class Meta:
     managed = True
     db_table = 'medals_total'
+    
+class MedalsTally(models.Model):
+  id = models.BigIntegerField(blank=True, primary_key=True)
+  edition = models.TextField(blank=True, null=True)
+  edition_id = models.BigIntegerField(blank=True, null=True)
+  year = models.BigIntegerField(blank=True, null=True)
+  country = models.TextField(blank=True, null=True)
+  country_noc = models.TextField(blank=True, null=True)
+  gold = models.BigIntegerField(blank=True, null=True)
+  silver = models.BigIntegerField(blank=True, null=True)
+  bronze = models.BigIntegerField(blank=True, null=True)
+  total = models.BigIntegerField(blank=True, null=True)
+
+  class Meta:
+      managed = False
+      db_table = 'medals_tally'
 
 
 # class Schedules(models.Model):
