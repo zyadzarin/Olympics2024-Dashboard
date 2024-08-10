@@ -9,9 +9,11 @@ from rest_framework.response import Response
 from .models import Events, Athletes, Medals, Athletes, Medallists, MedalsTotal
 from django.db.models import Q
 from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer
+from django.utils.decorators import method_decorator
 
 # Create your views here.
 class MedallistsStatsView(APIView):
+  @method_decorator(cache_page(60 * 10))    # Cache the response for 10 minutes
   def get(self, request):
     participants_count = Medallists.objects.values('name').distinct().count()
     countries_count = Medallists.objects.values('country').distinct().count()
@@ -29,6 +31,7 @@ class MedallistsStatsView(APIView):
     return Response(serializer.data)
 
 class CountryMedalsView(APIView):
+  @method_decorator(cache_page(60 * 10))    # Cache the response for 10 minutes
   def get(self, request):
     # Get medal counts from MedalsTotal
     medals_data = MedalsTotal.objects.all()
@@ -43,6 +46,7 @@ class CountryMedalsView(APIView):
       country_data = {
         'country_code': medal.country_code,
         'country': Athletes.objects.filter(country_code=medal.country_code).values_list('country', flat=True).first() or '',
+        'country_full': Athletes.objects.filter(country_code=medal.country_code).values_list('country_full', flat=True).first() or '',
         'gold': medal.gold_medal or 0,
         'silver': medal.silver_medal or 0,
         'bronze': medal.bronze_medal or 0,
