@@ -16,3 +16,15 @@ class CountryMedalsSerializer(serializers.Serializer):
   bronze = serializers.IntegerField()
   total = serializers.IntegerField()
   athletes_num = serializers.IntegerField()
+  
+class YearlyMedalsSerializer(serializers.Serializer):
+  year = serializers.IntegerField()
+  gold = serializers.IntegerField()
+  silver = serializers.IntegerField()
+  bronze = serializers.IntegerField()
+  total = serializers.IntegerField()
+
+class CountryMedalsHistorySerializer(serializers.Serializer):
+  country_code = serializers.CharField()
+  country = serializers.CharField()
+  medals_history = YearlyMedalsSerializer(many=True)
