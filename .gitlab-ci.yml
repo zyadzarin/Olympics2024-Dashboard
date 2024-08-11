@@ -38,14 +38,16 @@ deploy:
     - build
   before_script:
     - apt-get update -qq && apt-get install -y openssh-client
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - eval `ssh-agent`
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    # add server to list of known hosts
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
+    - touch ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
     - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
   script:
-    - scp docker-compose.yml root@$VM_IP:$DEPLOY_PATH/docker-compose.yml
+    - scp docker-compose.yml root@$VM_IP:$DEPLOY_PATH/
     - ssh root@$VM_IP "
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
@@ -92,4 +94,3 @@ rollback:
       "
   only:
     - main
-    
