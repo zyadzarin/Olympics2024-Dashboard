@@ -11,6 +11,7 @@ variables:
   NGINX_IMAGE: $CI_REGISTRY/olympic2024-dashboard-nginx:$CI_COMMIT_SHORT_SHA
   TSFILE: "tailscale_1.28.0_amd64.tgz"
   VM_IP: 100.117.79.105
+  DEPLOY_PATH: /home/odoo/olympic2024-dashboard
 
 tailscale-setup:
   stage: setup
@@ -58,10 +59,10 @@ deploy:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $VM_IP >> ~/.ssh/known_hosts
+    - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
   script:
-    - scp docker-compose.yml odoo@$VM_IP:/path/to/project/
+    - scp docker-compose.yml odoo@$VM_IP:$DEPLOY_PATH/
     - ssh odoo@$VM_IP "
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
