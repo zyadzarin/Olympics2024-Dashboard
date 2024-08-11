@@ -33,25 +33,29 @@ class MedallistsStatsView(APIView):
 class CountryMedalsView(APIView):
   @method_decorator(cache_page(60 * 10))    # Cache the response for 10 minutes
   def get(self, request):
-    # Get medal counts from MedalsTotal
-    medals_data = MedalsTotal.objects.all()
+    # Get all unique countries from Athletes
+    all_countries = Athletes.objects.values('country_code', 'country', 'country_full').distinct()
 
-    # Get athlete counts from Athletes
+    # Get medal counts from MedalsTotal
+    medals_data = {medal.country_code: medal for medal in MedalsTotal.objects.all()}
+
+    # Get athlete counts
     athlete_counts = Athletes.objects.values('country_code').annotate(athletes_num=Count('code'))
+    athlete_counts_dict = {item['country_code']: item['athletes_num'] for item in athlete_counts}
 
     # Combine the data
     combined_data = []
-    for medal in medals_data:
-      athlete_count = next((item for item in athlete_counts if item['country_code'] == medal.country_code), None)
+    for country in all_countries:
+      medal_info = medals_data.get(country['country_code'], None)
       country_data = {
-        'country_code': medal.country_code,
-        'country': Athletes.objects.filter(country_code=medal.country_code).values_list('country', flat=True).first() or '',
-        'country_full': Athletes.objects.filter(country_code=medal.country_code).values_list('country_full', flat=True).first() or '',
-        'gold': medal.gold_medal or 0,
-        'silver': medal.silver_medal or 0,
-        'bronze': medal.bronze_medal or 0,
-        'total': medal.total or 0,
-        'athletes_num': athlete_count['athletes_num'] if athlete_count else 0
+        'country_code': country['country_code'],
+        'country': country['country'] or '',
+        'country_full': country['country_full'] or '',
+        'gold': medal_info.gold_medal if medal_info else 0,
+        'silver': medal_info.silver_medal if medal_info else 0,
+        'bronze': medal_info.bronze_medal if medal_info else 0,
+        'total': medal_info.total if medal_info else 0,
+        'athletes_num': athlete_counts_dict.get(country['country_code'], 0)
       }
       combined_data.append(country_data)
 
