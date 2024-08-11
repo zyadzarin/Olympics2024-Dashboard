@@ -31,8 +31,6 @@ tailscale-setup:
 build:
   stage: build
   ## Run on a gitlab-runner that is configured with docker-in-docker
-  tags:
-    - dind
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
