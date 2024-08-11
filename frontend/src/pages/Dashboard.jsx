@@ -17,6 +17,7 @@ import DashboardCard10 from '../partials/dashboard/DashboardCard10';
 import DashboardCard11 from '../partials/dashboard/DashboardCard11';
 import DashboardCard12 from '../partials/dashboard/DashboardCard12';
 import DashboardCard13 from '../partials/dashboard/DashboardCard13';
+import OlympicMedalTreemap from '../charts/OlympicMedalTreemap';
 import Banner from '../partials/Banner';
 
 function Dashboard() {
@@ -69,7 +70,7 @@ function Dashboard() {
               {/* Table (Top Channels) */}
               <DashboardCard07 />
               {/* Line chart (Sales Over Time) */}
-              {/* <DashboardCard08 /> */}
+              <OlympicMedalTreemap />
               {/* Stacked bar chart (Sales VS Refunds) */}
               {/* <DashboardCard09 /> */}
               {/* Card (Customers) */}
