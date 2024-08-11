@@ -2,14 +2,15 @@ from django.db.models import Count, Q, Subquery
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Events, Athletes, Medals, Athletes, Medallists, MedalsTotal
 from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer
 from django.utils.decorators import method_decorator
 from .models import Events, Medals, Athletes, Medallists, MedalsTotal, MedalsTally
-from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, TopMedallistSerializer, SportSerializer
+from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, TopMedallistSerializer, SportSerializer, TopCountriesAthletesSerializer
+
 
 # Create your views here.
 class MedallistsStatsView(APIView):
@@ -186,3 +187,48 @@ class CountryMedalsHistoryView(APIView):
       'country': MedalsTally.objects.filter(country_noc=country.country_code).values_list('country', flat=True).first() or '',
       'medals_history': medals_history
     }
+
+class TopCountriesAthletesView(APIView):
+    @method_decorator(cache_page(60 * 5))  # Cache the response for 5 minutes
+    def get(self, request):
+        # Get top 5 countries
+        top_countries = MedalsTotal.objects.order_by('-total')[:5]
+
+        result = []
+        for country in top_countries:
+            country_data = {
+                'country_code': country.country_code,
+                'total': country.total,
+                'gold_medal': country.gold_medal,
+                'silver_medal': country.silver_medal,
+                'bronze_medal': country.bronze_medal,
+                'athletes': []
+            }
+
+            # Get medallists for this country
+            medallists = Medallists.objects.filter(country_code=country.country_code)
+
+            # Group medals by athlete
+            athlete_medals = {}
+            for medallist in medallists:
+                if medallist.name not in athlete_medals:
+                    athlete_medals[medallist.name] = []
+                athlete_medals[medallist.name].append({
+                    'medal_type': medallist.medal_type,
+                    'discipline': medallist.discipline,
+                    'event': medallist.event
+                })
+
+            # Add athlete data to country_data
+            for athlete, medals in athlete_medals.items():
+                country_data['athletes'].append({
+                    'name': athlete,
+                    'medals': medals
+                })
+
+            result.append(country_data)
+
+        serializer = TopCountriesAthletesSerializer(data={'top_countries': result})
+        if serializer.is_valid():
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

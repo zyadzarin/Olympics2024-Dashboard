@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Medallists
+from .models import Medallists, MedalsTotal
 from datetime import date
 
 class MedallitstsStatsSerializer(serializers.Serializer):
@@ -98,3 +98,25 @@ class TopMedallistSerializer(serializers.Serializer):
       today = date.today()
       return today.year - obj['birth_date'].year - ((today.month, today.day) < (obj['birth_date'].month, obj['birth_date'].day))
     return None
+
+
+
+class MedalSerializer(serializers.Serializer):
+    medal_type = serializers.CharField()
+    discipline = serializers.CharField()
+    event = serializers.CharField()
+
+class AthleteSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    medals = MedalSerializer(many=True)
+
+class CountrySerializer(serializers.Serializer):
+    country_code = serializers.CharField()
+    total = serializers.IntegerField()
+    gold_medal = serializers.IntegerField()
+    silver_medal = serializers.IntegerField()
+    bronze_medal = serializers.IntegerField()
+    athletes = AthleteSerializer(many=True)
+
+class TopCountriesAthletesSerializer(serializers.Serializer):
+    top_countries = CountrySerializer(many=True)

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import MedallistsStatsView, CountryMedalsView, CountryMedalsHistoryView, TopMedallistListView, SportListView
+from .views import MedallistsStatsView, CountryMedalsView, CountryMedalsHistoryView, TopMedallistListView, SportListView, TopCountriesAthletesView
 
 urlpatterns = [
   path('general_stats/', MedallistsStatsView.as_view(), name='medallists-stats'),
@@ -8,6 +8,7 @@ urlpatterns = [
   path('sports/', SportListView.as_view(), name='sports'),
   path('top_medallists/', TopMedallistListView.as_view(), name='top-medallists'),
   path('country_medals_history/', CountryMedalsHistoryView.as_view(), name='country-medals-history'),
+  path('top_countries_athletes/', TopCountriesAthletesView.as_view(), name='top-countries-athletes'),
   
 ]
 
