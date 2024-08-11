@@ -38,7 +38,7 @@ build:
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
   script:
     - docker build -t $BACKEND_IMAGE -f docker/backend/Dockerfile .
     - docker push $BACKEND_IMAGE
@@ -63,7 +63,7 @@ deploy:
   script:
     - scp docker-compose.yml odoo@$VM_IP:/path/to/project/
     - ssh odoo@$VM_IP "
-        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
         export NGINX_IMAGE=$NGINX_IMAGE &&
         docker-compose pull &&
