@@ -42,7 +42,7 @@ function Header({
           {/* Header: Middle for Title*/}
           <div className="flex items-center justify-center flex-1 ">
             <a href="/" className="text-2xl font-semibold leading-none text-gray-800 dark:text-gray-100">
-              Paris 2024 Summer Olympics Dashboard
+              Paris 2asddas Summer Olympics Dashboard
             </a>
           </div>
 
