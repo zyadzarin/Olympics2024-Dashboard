@@ -84,6 +84,12 @@ rollback:
             docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
             export BACKEND_IMAGE=$BACKEND_IMAGE:\$LAST_VERSION &&
             export NGINX_IMAGE=$NGINX_IMAGE:\$LAST_VERSION &&
+            echo 'Current directory contents:' &&
+            ls -la &&
+            echo 'Current working directory:' &&
+            pwd &&
+            cd .. &&
+            cd home/olympic2024-dashboard
             docker-compose pull &&
             docker-compose up -d
             echo 'Rolled back to version \$LAST_VERSION'
