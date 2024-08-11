@@ -47,18 +47,20 @@ deploy:
     - chmod 600 ~/.ssh/known_hosts
     - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
   script:
+    - ssh -o StrictHostKeyChecking=no root@$VM_IP "mkdir -p $DEPLOY_PATH"
     - rsync -avz -e "ssh -o StrictHostKeyChecking=no" docker-compose.yml root@$VM_IP:$DEPLOY_PATH/
     - ssh -o StrictHostKeyChecking=no root@$VM_IP "
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
         export NGINX_IMAGE=$NGINX_IMAGE &&
+        cd $DEPLOY_PATH &&
         docker-compose pull &&
-        docker-compose up -d
+        docker-compose up -d &&
         echo $CI_COMMIT_SHORT_SHA > last_deployed_version.txt
       "
   only:
     - main
-
+    
 rollback:
   stage: rollback
   image: ubuntu:22.04
