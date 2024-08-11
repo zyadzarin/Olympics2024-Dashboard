@@ -47,8 +47,8 @@ deploy:
     - chmod 600 ~/.ssh/known_hosts
     - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
   script:
-    - scp -o StrictHostKeyChecking=no -i $SSH_PRIVATE_KEY docker-compose.yml root@$VM_IP:$DEPLOY_PATH
-    - ssh -o StrictHostKeyChecking=no -i $SSH_PRIVATE_KEY root@$VM_IP "
+    - rsync -avz -e "ssh -o StrictHostKeyChecking=no" docker-compose.yml root@$VM_IP:$DEPLOY_PATH/
+    - ssh -o StrictHostKeyChecking=no root@$VM_IP "
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
         export NGINX_IMAGE=$NGINX_IMAGE &&
