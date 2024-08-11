@@ -52,8 +52,8 @@ deploy:
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
         export NGINX_IMAGE=$NGINX_IMAGE &&
-        cd /home/$DEPLOY_PATH &&
         ls &&
+        pwd &&
         docker-compose pull &&
         docker-compose up -d &&
         echo $CI_COMMIT_SHORT_SHA > last_deployed_version.txt
