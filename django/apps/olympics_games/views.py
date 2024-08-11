@@ -9,7 +9,8 @@ from .models import Events, Athletes, Medals, Athletes, Medallists, MedalsTotal
 from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer
 from django.utils.decorators import method_decorator
 from .models import Events, Medals, Athletes, Medallists, MedalsTotal, MedalsTally
-from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, TopMedallistSerializer, SportSerializer, TopCountriesAthletesSerializer
+from .serializers import (MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, TopMedallistSerializer, SportSerializer, TopCountriesAthletesSerializer
+                          , CountryInfoSerializer, ResponseSerializer2)
 
 
 # Create your views here.
@@ -131,10 +132,10 @@ class TopMedallistListView(generics.ListAPIView):
   serializer_class = TopMedallistSerializer
 
   def get_queryset(self):
-    # Subquery to get the top 100 athletes by total medal count
+    # Subquery to get the athletes by total medal count
     top_athletes = Medallists.objects.values('name')\
       .annotate(total_medals=Count('medal_type'))\
-      .order_by('-total_medals')[:100]
+      .order_by('-total_medals')[:]
 
     # Main query to get detailed information for the top 100 athletes
     return Medallists.objects.filter(name__in=Subquery(top_athletes.values('name')))\
@@ -232,3 +233,74 @@ class TopCountriesAthletesView(APIView):
         if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class CountryInfoListView(APIView):
+  @method_decorator(cache_page(60 * 60 * 24))  # Cache for 24 hours
+  def get(self, request):
+      # Get all unique country information
+      country_info = Athletes.objects.values('country_code', 'country', 'country_full').distinct()
+      
+      # Remove entries with null values
+      country_info = [info for info in country_info if all(info.values())]
+      
+      # Sort by country name
+      country_info = sorted(country_info, key=lambda x: x['country'])
+      
+      # Serialize the data
+      serializer = CountryInfoSerializer(country_info, many=True)
+      
+      return Response(serializer.data, status=status.HTTP_200_OK)
+  
+
+
+class MedalResultsView(APIView):
+    def get(self, request):
+        country = request.query_params.get('country')
+        sport = request.query_params.get('sport')
+
+        # If both country and sport are not selected, return an empty response
+        if not country and not sport:
+            return Response({'sports': []}, status=status.HTTP_200_OK)
+
+        # Start with all sports or filter by sport
+        sports_query = Events.objects.all()
+        if sport:
+            sports_query = sports_query.filter(sport__icontains=sport)
+
+        result = []
+        for sport_obj in sports_query:
+            sport_data = {
+                'sport': sport_obj.sport,
+                'gold': [],
+                'silver': [],
+                'bronze': []
+            }
+
+            # Filter medals for this sport
+            medals_query = Medals.objects.filter(discipline__icontains=sport_obj.sport)
+            if country:
+                medals_query = medals_query.filter(country_code=country)
+
+            # Get medal data efficiently
+            medals_data = medals_query.values('medal_type', 'name', 'country_code', 'discipline', 'event')
+
+            for medal in medals_data:
+                athlete = Athletes.objects.filter(name=medal['name']).values(
+                    'name', 'country', 'country_code', 'disciplines', 'events'
+                ).first()
+
+                if athlete:
+                    medal_data = {
+                        'medal_type': medal['medal_type'],
+                        'athlete': athlete,
+                        'discipline': medal['discipline'],
+                        'event': medal['event']
+                    }
+                    sport_data[medal['medal_type'].lower()].append(medal_data)
+
+            # Only add sport data if there are medals
+            if sport_data['gold'] or sport_data['silver'] or sport_data['bronze']:
+                result.append(sport_data)
+
+        serializer = ResponseSerializer2({'sports': result})
+        return Response(serializer.data, status=status.HTTP_200_OK)

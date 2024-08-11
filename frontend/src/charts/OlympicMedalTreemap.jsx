@@ -1,16 +1,21 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import axios from '../api';
 
 const OlympicMedalTreemap = () => {
   const svgRef = useRef(null);
   const tooltipRef = useRef(null);
+  const [countries, setCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [sports, setSports] = useState([]);
+  const [selectedSport, setSelectedSport] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get('top_countries_athletes/');
         const data = response.data;
+        setCountries(data.top_countries);
         createVisualization(data.top_countries);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -20,6 +25,19 @@ const OlympicMedalTreemap = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (selectedCountry) {
+      const uniqueSports = new Set();
+      selectedCountry.athletes.forEach(athlete => {
+        athlete.medals.forEach(medal => {
+          uniqueSports.add(medal.discipline);
+        });
+      });
+      setSports(Array.from(uniqueSports).sort());
+      setSelectedSport('');
+    }
+  }, [selectedCountry]);
+
   const createVisualization = (countries) => {
     const width = 800;
     const height = 600;
@@ -27,6 +45,8 @@ const OlympicMedalTreemap = () => {
     const svg = d3.select(svgRef.current)
       .attr('width', width)
       .attr('height', height);
+
+    svg.selectAll("*").remove(); // Clear previous rendering
 
     const tooltip = d3.select(tooltipRef.current);
 
@@ -63,7 +83,7 @@ const OlympicMedalTreemap = () => {
         tooltip.style('opacity', 0);
       })
       .on('click', (event, d) => {
-        showAthletes(d.data);
+        setSelectedCountry(d.data);
       });
 
     // Country labels
@@ -78,25 +98,42 @@ const OlympicMedalTreemap = () => {
       .attr('fill', 'white');
   };
 
-  const showAthletes = (country) => {
-    const athletesContainer = d3.select('#athletes-container');
-    athletesContainer.html('');
+  const renderAthletes = () => {
+    if (!selectedCountry || !selectedSport) return null;
 
-    athletesContainer.append('h3')
-      .text(`${country.country_code} - Top Athletes`);
+    const athletesInSport = selectedCountry.athletes.filter(athlete =>
+      athlete.medals.some(medal => medal.discipline === selectedSport)
+    );
 
-    const athleteList = athletesContainer.append('ul');
-
-    country.athletes.forEach(athlete => {
-      const athleteItem = athleteList.append('li');
-      athleteItem.append('strong').text(athlete.name);
-      const medalList = athleteItem.append('ul');
-
-      athlete.medals.forEach(medal => {
-        medalList.append('li')
-          .html(`${getMedalEmoji(medal.medal_type)} ${medal.event} (${medal.discipline})`);
-      });
+    const sortedAthletes = athletesInSport.sort((a, b) => {
+      const medalOrder = { 'Gold Medal': 3, 'Silver Medal': 2, 'Bronze Medal': 1 };
+      const aMedalValue = Math.max(...a.medals.filter(m => m.discipline === selectedSport).map(m => medalOrder[m.medal_type]));
+      const bMedalValue = Math.max(...b.medals.filter(m => m.discipline === selectedSport).map(m => medalOrder[m.medal_type]));
+      return bMedalValue - aMedalValue;
     });
+
+    return (
+      <ul className="mt-4">
+        {sortedAthletes.map((athlete, index) => (
+          <li key={index} className="mb-2">
+            <strong>{athlete.name}</strong>
+            <ul className="ml-4">
+              {athlete.medals
+                .filter(medal => medal.discipline === selectedSport)
+                .sort((a, b) => {
+                  const order = { 'Gold Medal': 3, 'Silver Medal': 2, 'Bronze Medal': 1 };
+                  return order[b.medal_type] - order[a.medal_type];
+                })
+                .map((medal, mIndex) => (
+                  <li key={mIndex}>
+                    {getMedalEmoji(medal.medal_type)} {medal.event}
+                  </li>
+                ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   const getMedalEmoji = (medalType) => {
@@ -113,7 +150,24 @@ const OlympicMedalTreemap = () => {
       <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Top 5 Countries Olympic Performance</h2>
       <div className="flex flex-col xl:flex-row">
         <svg ref={svgRef}></svg>
-        <div id="athletes-container" className="mt-4 xl:mt-0 xl:ml-4 flex-grow overflow-auto max-h-96"></div>
+        <div className="mt-4 xl:mt-0 xl:ml-4 flex-grow">
+          {selectedCountry && (
+            <>
+              <h3 className="text-md font-semibold mb-2">{selectedCountry.country_code} - Select a Sport</h3>
+              <select
+                value={selectedSport}
+                onChange={(e) => setSelectedSport(e.target.value)}
+                className="w-full p-2 border rounded mb-4 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">Select a sport</option>
+                {sports.map((sport, index) => (
+                  <option key={index} value={sport}>{sport}</option>
+                ))}
+              </select>
+              {renderAthletes()}
+            </>
+          )}
+        </div>
       </div>
       <div ref={tooltipRef} className="absolute bg-white dark:bg-gray-700 p-2 rounded shadow-md opacity-0 pointer-events-none"></div>
     </div>

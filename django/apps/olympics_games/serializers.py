@@ -32,47 +32,6 @@ class CountryMedalsHistorySerializer(serializers.Serializer):
   country = serializers.CharField()
   medals_history = YearlyMedalsSerializer(many=True)
 
-# {
-#   {
-#  “country”:”United States of America”,
-#  “country_code”:”USA”,
-#  "medals_history":{
-#   {
-#   “Year”:”1896”,
-#   “Bronze”:30,
-#   “Silver”:34,
-#   “Gold”:23,
-#   "Total":87
-#   },
-#     {
-#   “Year”:”2024”,
-#   “Bronze”:30,
-#   “Silver”:34,
-#   “Gold”:27,
-#   "Total":91
-#   },
-#   }
-#   },
-#   {
-#   “country”:”United Kingdom”,
-#   “country_code”:”GBR”,
-#   "medals_history":{
-#   {
-#   “Year”:”1896”,
-#   “Bronze”:30,
-#   “Silver”:34,
-#   “Gold”:23,
-#   "Total":87
-#   },
-#     {
-#   “Year”:”2024”,
-#   “Bronze”:30,
-#   “Silver”:34,
-#   “Gold”:27,
-#   "Total":91
-#   },
-# }}}
-
 class SportSerializer(serializers.Serializer):
     sport = serializers.CharField()
     sport_code = serializers.CharField()
@@ -122,3 +81,30 @@ class CountrySerializer(serializers.Serializer):
 
 class TopCountriesAthletesSerializer(serializers.Serializer):
     top_countries = CountrySerializer(many=True)
+
+class CountryInfoSerializer(serializers.Serializer):
+    country_code = serializers.CharField()
+    country = serializers.CharField()
+    country_full = serializers.CharField()
+
+class AthleteSerializer2(serializers.Serializer):
+    name = serializers.CharField()
+    country = serializers.CharField()
+    country_code = serializers.CharField()
+    disciplines = serializers.CharField()
+    events = serializers.CharField()
+
+class MedalSerializer2(serializers.Serializer):
+    medal_type = serializers.CharField()
+    athlete = AthleteSerializer()
+    discipline = serializers.CharField()
+    event = serializers.CharField()
+
+class SportSerializer2(serializers.Serializer):
+    sport = serializers.CharField()
+    gold = MedalSerializer(many=True)
+    silver = MedalSerializer(many=True)
+    bronze = MedalSerializer(many=True)
+
+class ResponseSerializer2(serializers.Serializer):
+    sports = SportSerializer(many=True)

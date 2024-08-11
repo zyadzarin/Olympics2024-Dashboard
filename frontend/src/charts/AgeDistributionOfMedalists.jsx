@@ -46,7 +46,7 @@ const AgeDistributionOfMedalists = ({ athletesData }) => {
     plugins: {
       title: {
         display: true,
-        text: 'Age Distribution of Top 100 Olympic Medalists',
+        text: 'Age Distribution of 2024 Olympic Medalists',
         font: {
           size: 16,
         },
