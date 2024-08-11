@@ -73,7 +73,7 @@ function Dashboard() {
               {/* Line chart (Sales Over Time) */}
               <OlympicMedalTreemap />
               {/* Stacked bar chart (Sales VS Refunds) */}
-              <OlympicMedalDisplay />
+              {/* <OlympicMedalDisplay /> */}
               {/* Card (Customers) */}
               {/* <DashboardCard10 /> */}
               {/* Card (Reasons for Refunds) */}
