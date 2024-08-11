@@ -37,7 +37,7 @@ deploy:
   needs:
     - build
   before_script:
-    - apt-get update -qq && apt-get install -y openssh-client
+    - apt-get update -qq && apt-get install -y openssh-client rsync
     - eval `ssh-agent`
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
     # add server to list of known hosts
