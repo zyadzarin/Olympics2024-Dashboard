@@ -19,6 +19,8 @@ services:
         entrypoint: /app/docker/backend/wsgi-entrypoint.sh
         volumes:
             - static_volume:/app/backend/django_static
+        ports:
+            - 8000:8000
         expose:
             - 8000
 
