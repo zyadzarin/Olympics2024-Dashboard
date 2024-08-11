@@ -1,9 +1,9 @@
 #!/bin/sh
 
-until cd /app/backend
-do
-    echo "Waiting for server volume..."
-done
+# until cd /app/backend
+# do
+#     echo "Waiting for server volume..."
+# done
 # python manage.py makemigrations
 # until python manage.py migrate
 # do
