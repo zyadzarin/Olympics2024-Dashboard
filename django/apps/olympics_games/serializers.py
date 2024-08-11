@@ -32,6 +32,47 @@ class CountryMedalsHistorySerializer(serializers.Serializer):
   country = serializers.CharField()
   medals_history = YearlyMedalsSerializer(many=True)
 
+# {
+#   {
+#  “country”:”United States of America”,
+#  “country_code”:”USA”,
+#  "medals_history":{
+#   {
+#   “Year”:”1896”,
+#   “Bronze”:30,
+#   “Silver”:34,
+#   “Gold”:23,
+#   "Total":87
+#   },
+#     {
+#   “Year”:”2024”,
+#   “Bronze”:30,
+#   “Silver”:34,
+#   “Gold”:27,
+#   "Total":91
+#   },
+#   }
+#   },
+#   {
+#   “country”:”United Kingdom”,
+#   “country_code”:”GBR”,
+#   "medals_history":{
+#   {
+#   “Year”:”1896”,
+#   “Bronze”:30,
+#   “Silver”:34,
+#   “Gold”:23,
+#   "Total":87
+#   },
+#     {
+#   “Year”:”2024”,
+#   “Bronze”:30,
+#   “Silver”:34,
+#   “Gold”:27,
+#   "Total":91
+#   },
+# }}}
+
 class SportSerializer(serializers.Serializer):
     sport = serializers.CharField()
     sport_code = serializers.CharField()
