@@ -1,4 +1,4 @@
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Subquery
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
@@ -6,11 +6,10 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Events, Athletes, Medals, Athletes, Medallists, MedalsTotal
-from django.db.models import Q
 from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer
 from django.utils.decorators import method_decorator
 from .models import Events, Medals, Athletes, Medallists, MedalsTotal, MedalsTally
-from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, MedallistSerializer
+from .serializers import MedallitstsStatsSerializer, CountryMedalsSerializer, CountryMedalsHistorySerializer, TopMedallistSerializer
 
 # Create your views here.
 class MedallistsStatsView(APIView):
@@ -118,9 +117,25 @@ def sport_list(request):
   # Return the data as JSON response
   return JsonResponse({'sports': sport_list}, encoder=DjangoJSONEncoder)
 
-class MedallistListView(generics.ListAPIView):
-  queryset = Medallists.objects.all()
-  serializer_class = MedallistSerializer
+class TopMedallistListView(generics.ListAPIView):
+  serializer_class = TopMedallistSerializer
+
+  def get_queryset(self):
+    # Subquery to get the top 100 athletes by total medal count
+    top_athletes = Medallists.objects.values('name')\
+      .annotate(total_medals=Count('medal_type'))\
+      .order_by('-total_medals')[:100]
+
+    # Main query to get detailed information for the top 100 athletes
+    return Medallists.objects.filter(name__in=Subquery(top_athletes.values('name')))\
+      .values('name', 'gender', 'nationality', 'country_code', 'event', 'birth_date')\
+      .annotate(
+        gold=Count('medal_type', filter=Q(medal_type='Gold Medal')),
+        silver=Count('medal_type', filter=Q(medal_type='Silver Medal')),
+        bronze=Count('medal_type', filter=Q(medal_type='Bronze Medal')),
+        total_medals=Count('medal_type')
+      )\
+      .order_by('-total_medals', '-gold', '-silver', '-bronze')
 
 class CountryMedalsHistoryView(APIView):
   def get(self, request):

@@ -30,27 +30,21 @@ class CountryMedalsHistorySerializer(serializers.Serializer):
   country = serializers.CharField()
   medals_history = YearlyMedalsSerializer(many=True)
   
-class MedallistSerializer(serializers.ModelSerializer):
+class TopMedallistSerializer(serializers.Serializer):
+  name = serializers.CharField()
+  gender = serializers.CharField()
+  nationality = serializers.CharField()
+  country_code = serializers.CharField()
+  event = serializers.CharField()
+  birth_date = serializers.DateField()
   age = serializers.SerializerMethodField()
-  gold = serializers.SerializerMethodField()
-  silver = serializers.SerializerMethodField()
-  bronze = serializers.SerializerMethodField()
-
-  class Meta:
-    model = Medallists
-    fields = ['name', 'gender', 'nationality', 'country_code', 'event', 'age', 'gold', 'silver', 'bronze']
+  gold = serializers.IntegerField()
+  silver = serializers.IntegerField()
+  bronze = serializers.IntegerField()
+  total_medals = serializers.IntegerField()
 
   def get_age(self, obj):
-    if obj.birth_date:
+    if obj['birth_date']:
       today = date.today()
-      return today.year - obj.birth_date.year - ((today.month, today.day) < (obj.birth_date.month, obj.birth_date.day))
+      return today.year - obj['birth_date'].year - ((today.month, today.day) < (obj['birth_date'].month, obj['birth_date'].day))
     return None
-
-  def get_gold(self, obj):
-    return Medallists.objects.filter(name=obj.name, medal_type='Gold').count()
-
-  def get_silver(self, obj):
-    return Medallists.objects.filter(name=obj.name, medal_type='Silver').count()
-
-  def get_bronze(self, obj):
-    return Medallists.objects.filter(name=obj.name, medal_type='Bronze').count()
