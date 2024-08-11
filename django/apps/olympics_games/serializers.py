@@ -7,6 +7,8 @@ class MedallitstsStatsSerializer(serializers.Serializer):
   countries_count = serializers.IntegerField()
   medals_count = serializers.IntegerField()
   events_count = serializers.IntegerField()
+  male_count = serializers.IntegerField()
+  female_count = serializers.IntegerField()
   
 class CountryMedalsSerializer(serializers.Serializer):
   country_code = serializers.CharField()
