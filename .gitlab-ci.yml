@@ -10,7 +10,7 @@ variables:
   BACKEND_IMAGE: $CI_REGISTRY/olympic2024-dashboard-backend
   NGINX_IMAGE: $CI_REGISTRY/olympic2024-dashboard-nginx
   VM_IP: 206.189.89.80
-  DEPLOY_PATH: /home/root/olympic2024-dashboard
+  DEPLOY_PATH: /home/olympic2024-dashboard
 
 build:
   stage: build
