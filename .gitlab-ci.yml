@@ -10,7 +10,7 @@ variables:
   BACKEND_IMAGE: $CI_REGISTRY/olympic2024-dashboard-backend
   NGINX_IMAGE: $CI_REGISTRY/olympic2024-dashboard-nginx
   VM_IP: 206.189.89.80
-  DEPLOY_PATH: olympic2024-dashboard/
+  DEPLOY_PATH: /home/olympic2024-dashboard/
 
 build:
   stage: build
@@ -47,13 +47,13 @@ deploy:
     - chmod 600 ~/.ssh/known_hosts
     - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
   script:
+    - ssh -o StrictHostKeyChecking=no root@$VM_IP "mkdir -p $DEPLOY_PATH"
     - scp -o StrictHostKeyChecking=no docker-compose.yml root@$VM_IP:$DEPLOY_PATH
     - ssh -o StrictHostKeyChecking=no root@$VM_IP "
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
         export NGINX_IMAGE=$NGINX_IMAGE &&
-        ls &&
-        pwd &&
+        cd $DEPLOY_PATH &&
         docker-compose pull &&
         docker-compose up -d &&
         echo $CI_COMMIT_SHORT_SHA > last_deployed_version.txt
@@ -88,7 +88,7 @@ rollback:
             ls -la &&
             echo 'Current working directory:' &&
             pwd &&
-            cd .. && cd .. && ls &&
+            cd .. && 
             cd home/olympic2024-dashboard
             docker-compose pull &&
             docker-compose up -d
