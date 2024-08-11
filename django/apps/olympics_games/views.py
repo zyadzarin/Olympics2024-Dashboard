@@ -19,12 +19,16 @@ class MedallistsStatsView(APIView):
     countries_count = Medallists.objects.values('country').distinct().count()
     medals_count = Medallists.objects.exclude(medal_type__isnull=True).count()
     events_count = Medallists.objects.values('event').distinct().count()
+    male_count = Medallists.objects.filter(gender='Male').values('name').distinct().count()
+    female_count = Medallists.objects.filter(gender='Female').values('name').distinct().count()
 
     data = {
       'participants_count': participants_count,
       'countries_count': countries_count,
       'medals_count': medals_count,
       'events_count': events_count,
+      'male_count': male_count,
+      'female_count': female_count,
     }
 
     serializer = MedallitstsStatsSerializer(data)
