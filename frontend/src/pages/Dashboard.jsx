@@ -17,6 +17,8 @@ import DashboardCard10 from '../partials/dashboard/DashboardCard10';
 import DashboardCard11 from '../partials/dashboard/DashboardCard11';
 import DashboardCard12 from '../partials/dashboard/DashboardCard12';
 import DashboardCard13 from '../partials/dashboard/DashboardCard13';
+import OlympicMedalTreemap from '../charts/OlympicMedalTreemap';
+import OlympicMedalDisplay from '../charts/OlympicMedalDisplay';
 import Banner from '../partials/Banner';
 
 function Dashboard() {
@@ -65,13 +67,13 @@ function Dashboard() {
               {/* Line chart (Country medals history) */}
               <DashboardCard05 />
               {/* Stacked Bar Chart (Top Athletes) */}
-              <DashboardCard06 />
+              {/* <DashboardCard06 /> */}
               {/* Table (Top Channels) */}
               <DashboardCard07 />
               {/* Line chart (Sales Over Time) */}
-              {/* <DashboardCard08 /> */}
+              <OlympicMedalTreemap />
               {/* Stacked bar chart (Sales VS Refunds) */}
-              {/* <DashboardCard09 /> */}
+              <OlympicMedalDisplay />
               {/* Card (Customers) */}
               {/* <DashboardCard10 /> */}
               {/* Card (Reasons for Refunds) */}

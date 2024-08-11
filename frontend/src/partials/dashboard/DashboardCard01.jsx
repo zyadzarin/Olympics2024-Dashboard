@@ -14,7 +14,6 @@ function DashboardCard01() {
             try {
                 const response = await axios.get('general_stats/');
                 setData(response.data);
-                console.log(response.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
