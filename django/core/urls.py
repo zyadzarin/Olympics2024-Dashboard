@@ -22,5 +22,6 @@ urlpatterns = [
     
     # Version 1
     path('api/v1/', include('apps.olympics_games.urls')),
+    path('', include('django_prometheus.urls'))
     # path('api/v1/', include('apps.results.urls')),
 ]
