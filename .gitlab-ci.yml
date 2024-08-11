@@ -1,7 +1,7 @@
 stages:
-  - setup
   - build
   - deploy
+  - rollback
 
 variables:
   CI_REGISTRY_USER: $REGISTRY_USER
@@ -9,27 +9,8 @@ variables:
   CI_REGISTRY: zyadzarin
   BACKEND_IMAGE: $CI_REGISTRY/olympic2024-dashboard-backend:$CI_COMMIT_SHORT_SHA
   NGINX_IMAGE: $CI_REGISTRY/olympic2024-dashboard-nginx:$CI_COMMIT_SHORT_SHA
-  TSFILE: "tailscale_1.28.0_amd64.tgz"
-  VM_IP: 100.117.79.105
-  DEPLOY_PATH: /home/odoo/olympic2024-dashboard
-
-tailscale-setup:
-  stage: setup
-  image: ubuntu:latest
-  before_script:
-    - apt-get update -qq && apt-get install -y iptables wget
-  script:
-    - cd /usr/local/bin
-    - wget https://pkgs.tailscale.com/stable/${TSFILE} -P /tmp
-    - tar xzf /tmp/${TSFILE} --strip-components=1
-    - rm /tmp/${TSFILE}
-    - mkdir -p /var/run/tailscale
-    - update-alternatives --set iptables /usr/sbin/iptables-legacy
-    - tailscaled --state="mem:" &
-    - tailscale up --authkey=${TAILSCALE_AUTHKEY} --hostname="gitlab-$(cat /etc/hostname)" --accept-routes
-    - tailscale status
-  only:
-    - main
+  VM_IP: 206.189.89.80
+  DEPLOY_PATH: /home/root/olympic2024-dashboard
 
 build:
   stage: build
@@ -41,16 +22,18 @@ build:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
   script:
-    - docker build -t $BACKEND_IMAGE -f docker/backend/Dockerfile .
-    - docker push $BACKEND_IMAGE
-    - docker build -t $NGINX_IMAGE -f docker/nginx/Dockerfile .
-    - docker push $NGINX_IMAGE
+    - docker build -t $BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA -t $BACKEND_IMAGE:latest -f docker/backend/Dockerfile .
+    - docker push $BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $BACKEND_IMAGE:latest
+    - docker build -t $NGINX_IMAGE:$CI_COMMIT_SHORT_SHA -t $NGINX_IMAGE:latest -f docker/nginx/Dockerfile .
+    - docker push $NGINX_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $NGINX_IMAGE:latest
   only:
     - main
 
 deploy:
   stage: deploy
-  image: ubuntu:latest
+  image: ubuntu:22.04
   needs:
     - build
   before_script:
@@ -62,13 +45,50 @@ deploy:
     - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
   script:
-    - scp docker-compose.yml odoo@$VM_IP:$DEPLOY_PATH/docker-compose.yml
-    - ssh odoo@$VM_IP "
+    - scp docker-compose.yml root@$VM_IP:$DEPLOY_PATH/docker-compose.yml
+    - ssh root@$VM_IP "
         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
         export BACKEND_IMAGE=$BACKEND_IMAGE &&
         export NGINX_IMAGE=$NGINX_IMAGE &&
         docker-compose pull &&
         docker-compose up -d
+        echo $CI_COMMIT_SHORT_SHA > last_deployed_version.txt
+      "
+  only:
+    - main
+
+rollback:
+  stage: rollback
+  image: ubuntu:22.04
+  when: manual
+  before_script:
+    - apt-get update && apt-get install -y openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DO_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - |
+      ssh root@$VM_IP "
+        cd $DEPLOY_PATH
+        if [ -f last_deployed_version.txt ]; then
+          LAST_VERSION=\$(cat last_deployed_version.txt)
+          CURRENT_VERSION=$CI_COMMIT_SHORT_SHA
+          if [ \"\$LAST_VERSION\" != \"\$CURRENT_VERSION\" ]; then
+            docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+            export BACKEND_IMAGE=$BACKEND_IMAGE:\$LAST_VERSION &&
+            export NGINX_IMAGE=$NGINX_IMAGE:\$LAST_VERSION &&
+            docker-compose pull &&
+            docker-compose up -d
+            echo 'Rolled back to version \$LAST_VERSION'
+          else
+            echo 'Current version is the same as the last deployed version. No rollback needed.'
+          fi
+        else
+          echo 'No previous version found. Cannot rollback.'
+        fi
       "
   only:
     - main
