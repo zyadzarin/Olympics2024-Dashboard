@@ -139,32 +139,42 @@ class TopMedallistListView(generics.ListAPIView):
       .order_by('-total_medals', '-gold', '-silver', '-bronze')
 
 class CountryMedalsHistoryView(APIView):
+  @method_decorator(cache_page(60 * 5))  # Cache the response for 5 minutes
   def get(self, request):
-    # Get all countries from MedalsTotal
-    countries = MedalsTotal.objects.all()
+    country_code = request.query_params.get('country_code')
 
-    combined_data = []
-    for country in countries:
-      # Get past years' data
-      past_medals = MedalsTally.objects.filter(country_noc=country.country_code)\
-        .values('year', 'gold', 'silver', 'bronze', 'total')\
-        .order_by('year')
-
-      # Add 2024 data
-      medals_history = list(past_medals) + [{
-        'year': 2024,
-        'gold': country.gold_medal or 0,
-        'silver': country.silver_medal or 0,
-        'bronze': country.bronze_medal or 0,
-        'total': country.total or 0
-      }]
-
-      country_data = {
-        'country_code': country.country_code,
-        'country': MedalsTally.objects.filter(country_noc=country.country_code).values_list('country', flat=True).first() or '',
-        'medals_history': medals_history
-      }
-      combined_data.append(country_data)
+    if country_code:
+      # If country_code is provided, fetch data for that country only
+      country = MedalsTotal.objects.filter(country_code=country_code).first()
+      if not country:
+        return Response({"error": "Country not found"}, status=404)
+      
+      combined_data = [self.get_country_data(country)]
+    else:
+      # If no country_code is provided, fetch data for all countries
+      countries = MedalsTotal.objects.all()
+      combined_data = [self.get_country_data(country) for country in countries]
 
     serializer = CountryMedalsHistorySerializer(combined_data, many=True)
     return Response(serializer.data)
+
+  def get_country_data(self, country):
+    # Get past years' data
+    past_medals = MedalsTally.objects.filter(country_noc=country.country_code)\
+      .values('year', 'gold', 'silver', 'bronze', 'total')\
+      .order_by('year')
+
+    # Add 2024 data
+    medals_history = list(past_medals) + [{
+      'year': 2024,
+      'gold': country.gold_medal or 0,
+      'silver': country.silver_medal or 0,
+      'bronze': country.bronze_medal or 0,
+      'total': country.total or 0
+    }]
+
+    return {
+      'country_code': country.country_code,
+      'country': MedalsTally.objects.filter(country_noc=country.country_code).values_list('country', flat=True).first() or '',
+      'medals_history': medals_history
+    }
