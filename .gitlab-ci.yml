@@ -54,7 +54,7 @@ deploy:
         export BACKEND_IMAGE=$BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA &&
         export NGINX_IMAGE=$NGINX_IMAGE:$CI_COMMIT_SHORT_SHA &&
         docker-compose pull &&
-        docker-compose up -d &&
+        docker-compose up -d --build &&
         echo $CI_COMMIT_SHORT_SHA > last_deployed_version.txt
       "
   only:
