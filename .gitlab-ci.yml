@@ -4,11 +4,13 @@ stages:
   - deploy
 
 variables:
-    CI_REGISTRY_USER: $REGISTRY_USER
-    CI_REGISTRY_PASSWORD: $REGISTERY_PASS
-    CI_REGISTRY_IMAGE: zyadzarin/olympic2024-dashboard:tgp-1.0
-    TSFILE: "tailscale_1.28.0_amd64.tgz"
-    VM_IP: 100.117.79.105
+  CI_REGISTRY_USER: $REGISTRY_USER
+  CI_REGISTRY_PASSWORD: $REGISTERY_PASS
+  CI_REGISTRY: zyadzarin
+  BACKEND_IMAGE: $CI_REGISTRY/olympic2024-dashboard-backend:$CI_COMMIT_SHORT_SHA
+  NGINX_IMAGE: $CI_REGISTRY/olympic2024-dashboard-nginx:$CI_COMMIT_SHORT_SHA
+  TSFILE: "tailscale_1.28.0_amd64.tgz"
+  VM_IP: 100.117.79.105
 
 tailscale-setup:
   stage: setup
@@ -30,17 +32,18 @@ tailscale-setup:
 
 build:
   stage: build
-  ## Run on a gitlab-runner that is configured with docker-in-docker
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker build -t $CI_REGISTRY_IMAGE .
-    - docker push $CI_REGISTRY_IMAGE
+    - docker build -t $BACKEND_IMAGE -f docker/backend/Dockerfile .
+    - docker push $BACKEND_IMAGE
+    - docker build -t $NGINX_IMAGE -f docker/nginx/Dockerfile .
+    - docker push $NGINX_IMAGE
   only:
     - main
 
@@ -58,7 +61,13 @@ deploy:
     - ssh-keyscan -H $VM_IP >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
   script:
-    - ssh odoo@$VM_IP "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY_IMAGE"
-    - ssh odoo@$VM_IP "docker-compose pull && docker-compose up -d"
+    - scp docker-compose.yml odoo@$VM_IP:/path/to/project/
+    - ssh odoo@$VM_IP "
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        export BACKEND_IMAGE=$BACKEND_IMAGE &&
+        export NGINX_IMAGE=$NGINX_IMAGE &&
+        docker-compose pull &&
+        docker-compose up -d
+      "
   only:
     - main
