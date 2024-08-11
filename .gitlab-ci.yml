@@ -37,10 +37,9 @@ deploy:
   needs:
     - build
   before_script:
-    - apt-get update -qq && apt-get install -y openssh-client
+    - apt-get update -qq && apt-get install -y openssh-client rsync
     - eval `ssh-agent`
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
-    # add server to list of known hosts
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - touch ~/.ssh/known_hosts
@@ -48,12 +47,12 @@ deploy:
     - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
   script:
     - ssh -o StrictHostKeyChecking=no root@$VM_IP "mkdir -p $DEPLOY_PATH"
-    - scp -o StrictHostKeyChecking=no docker-compose.yml root@$VM_IP:$DEPLOY_PATH
+    - rsync -avz --exclude='.git' -e "ssh -o StrictHostKeyChecking=no" ./ root@$VM_IP:$DEPLOY_PATH
     - ssh -o StrictHostKeyChecking=no root@$VM_IP "
-        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
-        export BACKEND_IMAGE=$BACKEND_IMAGE &&
-        export NGINX_IMAGE=$NGINX_IMAGE &&
         cd $DEPLOY_PATH &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
+        export BACKEND_IMAGE=$BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA &&
+        export NGINX_IMAGE=$NGINX_IMAGE:$CI_COMMIT_SHORT_SHA &&
         docker-compose pull &&
         docker-compose up -d &&
         echo $CI_COMMIT_SHORT_SHA > last_deployed_version.txt
@@ -71,7 +70,7 @@ rollback:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DO_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H $VM_IP >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
   script:
     - |
@@ -81,17 +80,11 @@ rollback:
           LAST_VERSION=\$(cat last_deployed_version.txt)
           CURRENT_VERSION=$CI_COMMIT_SHORT_SHA
           if [ \"\$LAST_VERSION\" != \"\$CURRENT_VERSION\" ]; then
-            docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+            docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
             export BACKEND_IMAGE=$BACKEND_IMAGE:\$LAST_VERSION &&
             export NGINX_IMAGE=$NGINX_IMAGE:\$LAST_VERSION &&
-            echo 'Current directory contents:' &&
-            ls -la &&
-            echo 'Current working directory:' &&
-            pwd &&
-            cd .. && 
-            cd home/olympic2024-dashboard
             docker-compose pull &&
-            docker-compose up -d
+            docker-compose up -d &&
             echo 'Rolled back to version \$LAST_VERSION'
           else
             echo 'Current version is the same as the last deployed version. No rollback needed.'
