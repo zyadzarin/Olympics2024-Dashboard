@@ -88,7 +88,7 @@ rollback:
             ls -la &&
             echo 'Current working directory:' &&
             pwd &&
-            cd .. &&
+            cd .. && cd .. && ls &&
             cd home/olympic2024-dashboard
             docker-compose pull &&
             docker-compose up -d
