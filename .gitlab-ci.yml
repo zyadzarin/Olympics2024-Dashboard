@@ -65,33 +65,24 @@ rollback:
   image: ubuntu:22.04
   when: manual
   before_script:
-    - apt-get update && apt-get install -y openssh-client
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - apt-get update -qq && apt-get install -y openssh-client
+    - eval `ssh-agent`
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $VM_IP >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
+    - touch ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+    - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
   script:
-    - |
-      ssh root@$VM_IP "
-        cd $DEPLOY_PATH
-        if [ -f last_deployed_version.txt ]; then
-          LAST_VERSION=\$(cat last_deployed_version.txt)
-          CURRENT_VERSION=$CI_COMMIT_SHORT_SHA
-          if [ \"\$LAST_VERSION\" != \"\$CURRENT_VERSION\" ]; then
-            docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
-            export BACKEND_IMAGE=$BACKEND_IMAGE:\$LAST_VERSION &&
-            export NGINX_IMAGE=$NGINX_IMAGE:\$LAST_VERSION &&
-            docker-compose pull &&
-            docker-compose up -d &&
-            echo 'Rolled back to version \$LAST_VERSION'
-          else
-            echo 'Current version is the same as the last deployed version. No rollback needed.'
-          fi
-        else
-          echo 'No previous version found. Cannot rollback.'
-        fi
+    - ssh -o StrictHostKeyChecking=no root@$VM_IP "
+        cd $DEPLOY_PATH &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
+        PREVIOUS_VERSION=\$(cat last_deployed_version.txt) &&
+        export BACKEND_IMAGE=$BACKEND_IMAGE:\$PREVIOUS_VERSION &&
+        export NGINX_IMAGE=$NGINX_IMAGE:\$PREVIOUS_VERSION &&
+        docker-compose pull &&
+        docker-compose up -d --build &&
+        echo \$PREVIOUS_VERSION > last_deployed_version.txt
       "
   only:
     - main
