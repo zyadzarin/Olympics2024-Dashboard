@@ -5,6 +5,11 @@ const OlympicMedalHistoryChart = ({ data, width, height }) => {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
+  // List of Winter Olympic years
+  const winterOlympicYears = [
+    1924, 1928, 1932, 1936, 1948, 1952, 1956, 1960, 1964, 1968, 1972, 1976, 1980, 1984, 1988, 1992, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022
+  ];
+
   useEffect(() => {
     const createOrUpdateChart = () => {
       if (chartInstance.current) {
@@ -13,12 +18,16 @@ const OlympicMedalHistoryChart = ({ data, width, height }) => {
 
       if (chartRef.current && data && data.medals_history) {
         const ctx = chartRef.current.getContext('2d');
-        const summerData = data.medals_history.filter(d => parseInt(d.Year) % 4 === 0);
-        const winterData = data.medals_history.filter(d => parseInt(d.Year) % 4 === 2);
+        
+        const summerData = data.medals_history
+        const winterData = data.medals_history.filter(d => winterOlympicYears.includes(parseInt(d.year)));
 
         const createDataset = (label, data, color, dashStyle) => ({
           label,
-          data: data.map(d => ({ x: parseInt(d.Year), y: parseInt(d[label.split(' ')[0]]) })),
+          data: data.map(d => ({ 
+            x: parseInt(d.year), 
+            y: parseInt(d[label.split(' ')[0].toLowerCase()]) 
+          })),
           borderColor: color,
           backgroundColor: color,
           borderDash: dashStyle,
@@ -32,10 +41,10 @@ const OlympicMedalHistoryChart = ({ data, width, height }) => {
           createDataset('Silver (Summer)', summerData, 'silver', []),
           createDataset('Bronze (Summer)', summerData, '#CD7F32', []),
           createDataset('Total (Summer)', summerData, 'red', []),
-          createDataset('Gold (Winter)', winterData, 'rgba(255, 215, 0, 0.5)', [5, 5]),
-          createDataset('Silver (Winter)', winterData, 'rgba(192, 192, 192, 0.5)', [5, 5]),
-          createDataset('Bronze (Winter)', winterData, 'rgba(205, 127, 50, 0.5)', [5, 5]),
-          createDataset('Total (Winter)', winterData, 'rgba(255, 0, 0, 0.5)', [5, 5]),
+          // createDataset('Gold (Winter)', winterData, 'rgba(255, 215, 0, 0.5)', [5, 5]),
+          // createDataset('Silver (Winter)', winterData, 'rgba(192, 192, 192, 0.5)', [5, 5]),
+          // createDataset('Bronze (Winter)', winterData, 'rgba(205, 127, 50, 0.5)', [5, 5]),
+          // createDataset('Total (Winter)', winterData, 'rgba(255, 0, 0, 0.5)', [5, 5]),
         ];
 
         console.log('Datasets:', datasets); // Debug log
