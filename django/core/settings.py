@@ -43,7 +43,7 @@ ALLOWED_HOSTS = ['206.189.89.80']
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -54,11 +54,14 @@ INSTALLED_APPS = [
     # Custom Apps
     'apps.olympics_games',
     'apps.results',
+    'apps.user',
     
     # Third-party
     'corsheaders',
     'rest_framework',
     'django_prometheus',
+    'dj_rest_auth',
+    'rest_framework.authtoken',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 MIDDLEWARE = [
@@ -157,3 +160,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'django_static')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = "user.User"
