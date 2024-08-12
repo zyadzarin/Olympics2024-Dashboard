@@ -2,6 +2,7 @@ stages:
   - build
   - deploy
   - rollback
+  - test
 
 variables:
   CI_REGISTRY_USER: $REGISTRY_USER
@@ -86,3 +87,7 @@ rollback:
       "
   only:
     - main
+
+test:
+  script:
+    - echo "Hello World"
