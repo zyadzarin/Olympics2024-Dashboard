@@ -20,11 +20,13 @@ Sample login credentials:
 3. Open in your web browser: http://localhost:80
 
 ### Known issues when running locally and how to fix
-- Git automatically changes the End Of Line (EOL) Sequence of some files from LF to CRLF, causing problems with docker
-    - Fix: after cloning the repo, manually change the EOL sequence of the following files to LF instead of CRLF:
-        - docker\backend\Dockerfile
-        - docker\backend\wsgi-entrypoint.sh
-        - docker\nginx\Dockerfile 
+- Git automatically changes the End Of Line (EOL) Sequence of some files from `LF` to `CRLF`, causing problems with docker
+    - Fix: after cloning the repo, manually change the EOL sequence of the following files to `LF` instead of `CRLF`:
+        - `docker\backend\Dockerfile`
+        - `docker\backend\wsgi-entrypoint.sh`
+        - `docker\nginx\Dockerfile`
+- Docker returns a `401 Unauthorized: failed to authorize` when building the images
+    - Fix: run docker login in terminal
 
 # BY:
 - MUHAMMAD ZYAD ZARIN BIN ZAMBERI
