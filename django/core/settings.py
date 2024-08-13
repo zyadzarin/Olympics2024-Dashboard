@@ -45,7 +45,7 @@ ALLOWED_HOSTS = ['206.189.89.80',
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'django_prometheus',
+    'dj_rest_auth',
+    'rest_framework.authtoken',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 MIDDLEWARE = [
