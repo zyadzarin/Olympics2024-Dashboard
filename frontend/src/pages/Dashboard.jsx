@@ -29,7 +29,7 @@ function Dashboard() {
     <div className="flex h-screen overflow-hidden">
 
       {/* Sidebar */}
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      {/* <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} /> */}
 
       {/* Content area */}
       <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -73,7 +73,7 @@ function Dashboard() {
               {/* Line chart (Sales Over Time) */}
               <OlympicMedalTreemap />
               {/* Stacked bar chart (Sales VS Refunds) */}
-              <OlympicMedalDisplay />
+              {/* <OlympicMedalDisplay /> */}
               {/* Card (Customers) */}
               {/* <DashboardCard10 /> */}
               {/* Card (Reasons for Refunds) */}
