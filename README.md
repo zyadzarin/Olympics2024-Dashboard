@@ -7,7 +7,9 @@ To convince stakeholders of the dashboard’s potential for profitability
 ## Deployed Version
 This web dashboard is deployed on the following URL: [Paris Olympics 2024 Web Dashboard](http://206.189.89.80/)
 
-The login page is just a mock-up, so input anything in it and click the sign in button to get into the dashboard
+Sample login credentials:
+- Username: admin
+- Password: admin
 
 ## To Run Locally
 1. Install docker and docker compose
