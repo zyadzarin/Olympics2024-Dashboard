@@ -23,3 +23,8 @@ The login page is just a mock-up, so input anything in it and click the sign in 
         - docker\backend\Dockerfile
         - docker\backend\wsgi-entrypoint.sh
         - docker\nginx\Dockerfile 
+
+# BY:
+- MUHAMMAD ZYAD ZARIN BIN ZAMBERI
+- MICHELLE LOH
+- NUR ’AQILAH BINTI FAKHRURRAZI
