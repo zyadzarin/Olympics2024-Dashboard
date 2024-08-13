@@ -13,11 +13,12 @@ Sample login credentials:
 
 ## To Run Locally
 1. Install docker and docker compose
-2. Run in command line:
+2. Contact Michelle or Zyad for the .env.local file
+3. Run in command line:
    <pre>
    docker compose up --build --detach
    </pre>
-3. Open in your web browser: http://localhost:80
+4. Open in your web browser: http://localhost:80
 
 ### Known issues when running locally and how to fix
 - Git automatically changes the End Of Line (EOL) Sequence of some files from `LF` to `CRLF`, causing problems with docker
