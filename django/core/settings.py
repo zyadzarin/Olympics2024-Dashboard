@@ -37,7 +37,9 @@ SECRET_KEY = getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['206.189.89.80',
+                 'localhost',
+                 '127.0.0.1']
 
 
 # Application definition
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
     # Custom Apps
     'apps.olympics_games',
     'apps.results',
+    # 'apps.user',
     
     # Third-party
     'corsheaders',
@@ -157,3 +160,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'django_static')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# AUTH_USER_MODEL = "user.User"
