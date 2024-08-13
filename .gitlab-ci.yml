@@ -1,8 +1,9 @@
 stages:
+  - test
   - build
   - deploy
   - rollback
-  - test
+
 
 variables:
   CI_REGISTRY_USER: $REGISTRY_USER
@@ -12,6 +13,10 @@ variables:
   NGINX_IMAGE: $CI_REGISTRY/olympic2024-dashboard-nginx
   VM_IP: 206.189.89.80
   DEPLOY_PATH: /home/olympic2024-dashboard/
+
+test:
+  script:
+    - echo "Hello World"
 
 build:
   stage: build
@@ -88,6 +93,3 @@ rollback:
   only:
     - main
 
-test:
-  script:
-    - echo "Hello World"
