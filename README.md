@@ -26,7 +26,7 @@ Sample login credentials:
         - `docker\backend\wsgi-entrypoint.sh`
         - `docker\nginx\Dockerfile`
 - Docker returns a `401 Unauthorized: failed to authorize` when building the images
-    - Fix: run docker login in terminal
+    - Fix: run `docker login` in terminal
 
 # BY:
 - MUHAMMAD ZYAD ZARIN BIN ZAMBERI
