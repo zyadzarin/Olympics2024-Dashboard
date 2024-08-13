@@ -1,66 +1,93 @@
 stages:
-  - setup
   - build
   - deploy
+  - rollback
+  - test
 
 variables:
-    CI_REGISTRY_USER: $REGISTRY_USER
-    CI_REGISTRY_PASSWORD: $REGISTERY_PASS
-    CI_REGISTRY_IMAGE: zyadzarin/olympic2024-dashboard:tgp-1.0
-    TSFILE: "tailscale_1.28.0_amd64.tgz"
-    VM_IP: 100.117.79.105
-
-tailscale-setup:
-  stage: setup
-  image: ubuntu:latest
-  before_script:
-    - apt-get update -qq && apt-get install -y iptables wget
-  script:
-    - cd /usr/local/bin
-    - wget https://pkgs.tailscale.com/stable/${TSFILE} -P /tmp
-    - tar xzf /tmp/${TSFILE} --strip-components=1
-    - rm /tmp/${TSFILE}
-    - mkdir -p /var/run/tailscale
-    - update-alternatives --set iptables /usr/sbin/iptables-legacy
-    - tailscaled --state="mem:" &
-    - tailscale up --authkey=${TAILSCALE_AUTHKEY} --hostname="gitlab-$(cat /etc/hostname)" --accept-routes
-    - tailscale status
-  only:
-    - main
+  CI_REGISTRY_USER: $REGISTRY_USER
+  CI_REGISTRY_PASSWORD: $REGISTERY_PASS
+  CI_REGISTRY: zyadzarin
+  BACKEND_IMAGE: $CI_REGISTRY/olympic2024-dashboard-backend
+  NGINX_IMAGE: $CI_REGISTRY/olympic2024-dashboard-nginx
+  VM_IP: 206.189.89.80
+  DEPLOY_PATH: /home/olympic2024-dashboard/
 
 build:
   stage: build
-  ## Run on a gitlab-runner that is configured with docker-in-docker
-  tags:
-    - dind
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
-    - docker login -u $CI_REGISTRY_USER 
-                              -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
   script:
-    - docker push $CI_REGISTRY_IMAGE
+    - docker build -t $BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA -t $BACKEND_IMAGE:latest -f docker/backend/Dockerfile .
+    - docker push $BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $BACKEND_IMAGE:latest
+    - docker build -t $NGINX_IMAGE:$CI_COMMIT_SHORT_SHA -t $NGINX_IMAGE:latest -f docker/nginx/Dockerfile .
+    - docker push $NGINX_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $NGINX_IMAGE:latest
   only:
     - main
 
 deploy:
   stage: deploy
-  image: ubuntu:latest
+  image: ubuntu:22.04
   needs:
     - build
   before_script:
-    - apt-get update -qq && apt-get install -y openssh-client
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - apt-get update -qq && apt-get install -y openssh-client rsync
+    - eval `ssh-agent`
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $VM_IP >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
+    - touch ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+    - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
   script:
-    - ssh odoo@$VM_IP "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY"
-    - ssh odoo@$VM_IP "docker-compose pull && docker-compose up -d"
+    - ssh -o StrictHostKeyChecking=no root@$VM_IP "mkdir -p $DEPLOY_PATH"
+    - rsync -avz --exclude='.git' -e "ssh -o StrictHostKeyChecking=no" ./ root@$VM_IP:$DEPLOY_PATH
+    - ssh -o StrictHostKeyChecking=no root@$VM_IP "
+        cd $DEPLOY_PATH &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
+        export BACKEND_IMAGE=$BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA &&
+        export NGINX_IMAGE=$NGINX_IMAGE:$CI_COMMIT_SHORT_SHA &&
+        docker-compose pull &&
+        docker-compose up -d --build &&
+        echo $CI_COMMIT_SHORT_SHA > last_deployed_version.txt
+      "
   only:
     - main
+
+rollback:
+  stage: rollback
+  image: ubuntu:22.04
+  when: manual
+  before_script:
+    - apt-get update -qq && apt-get install -y openssh-client
+    - eval `ssh-agent`
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - touch ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+    - echo $SSH_HOST_KEY >> ~/.ssh/known_hosts
+  script:
+    - ssh -o StrictHostKeyChecking=no root@$VM_IP "
+        cd $DEPLOY_PATH &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
+        PREVIOUS_VERSION=\$(cat last_deployed_version.txt) &&
+        export BACKEND_IMAGE=$BACKEND_IMAGE:\$PREVIOUS_VERSION &&
+        export NGINX_IMAGE=$NGINX_IMAGE:\$PREVIOUS_VERSION &&
+        docker-compose pull &&
+        docker-compose up -d --build &&
+        echo \$PREVIOUS_VERSION > last_deployed_version.txt
+      "
+  only:
+    - main
+
+test:
+  script:
+    - echo "Hello World"
